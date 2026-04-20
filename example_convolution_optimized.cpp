@@ -71,128 +71,31 @@ std::ostream& operator<<(std::ostream& out, const OptimizedConvolutionParams& pa
 
 //----------------------------------------------------------------------
 
-#define OPTIMIZED_CONVOLUTION_PARAMS(OptL, type)                      \
-    /* Large image, few channels */                                   \
-    /* IC, OC,  IX, S, K, Layout         , Type      , Level */       \
-    {3, 16, 224, 1, 1, Layout::c_major, Type::type, Level::OptL},     \
-    {3, 16, 224, 2, 1, Layout::c_major, Type::type, Level::OptL},     \
-    {3, 16, 224, 1, 3, Layout::c_major, Type::type, Level::OptL},     \
-    {3, 16, 224, 2, 3, Layout::c_major, Type::type, Level::OptL},     \
-    {3, 16, 224, 1, 1, Layout::c_minor, Type::type, Level::OptL},     \
-    {3, 16, 224, 2, 1, Layout::c_minor, Type::type, Level::OptL},     \
-    {3, 16, 224, 1, 3, Layout::c_minor, Type::type, Level::OptL},     \
-    {3, 16, 224, 2, 3, Layout::c_minor, Type::type, Level::OptL},     \
-                                                                      \
-    /* Medium-size image, medium channels */                          \
-    /*IC,OC, IX, S, K, Layout         , Type      , Level */          \
-    {64, 64, 56, 1, 1, Layout::c_major, Type::type, Level::OptL},     \
-    {64, 64, 56, 2, 1, Layout::c_major, Type::type, Level::OptL},     \
-    {64, 64, 56, 1, 3, Layout::c_major, Type::type, Level::OptL},     \
-    {64, 64, 56, 2, 3, Layout::c_major, Type::type, Level::OptL},     \
-    {64, 64, 56, 1, 1, Layout::c_minor, Type::type, Level::OptL},     \
-    {64, 64, 56, 2, 1, Layout::c_minor, Type::type, Level::OptL},     \
-    {64, 64, 56, 1, 3, Layout::c_minor, Type::type, Level::OptL},     \
-    {64, 64, 56, 2, 3, Layout::c_minor, Type::type, Level::OptL},     \
-                                                                      \
-    /* Small image, med-to-many channels */                           \
-    /* IC,  OC, IX, S, K, Layout         , Type      , Level */       \
-    {128, 1024, 14, 1, 1, Layout::c_major, Type::type, Level::OptL},  \
-    {128, 1024, 14, 2, 1, Layout::c_major, Type::type, Level::OptL},  \
-    {128, 1024, 14, 1, 3, Layout::c_major, Type::type, Level::OptL},  \
-    {128, 1024, 14, 2, 3, Layout::c_major, Type::type, Level::OptL},  \
-    {128, 1024, 14, 1, 1, Layout::c_minor, Type::type, Level::OptL},  \
-    {128, 1024, 14, 2, 1, Layout::c_minor, Type::type, Level::OptL},  \
-    {128, 1024, 14, 1, 3, Layout::c_minor, Type::type, Level::OptL},  \
-    {128, 1024, 14, 2, 3, Layout::c_minor, Type::type, Level::OptL},  \
-                                                                      \
-    /* Tiny image, many channels */                                   \
-    /* IC,  OC, IX, S, K, Layout         , Type      , Level */       \
-    {1024, 1024, 2, 1, 1, Layout::c_major, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 2, 1, Layout::c_major, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 1, 3, Layout::c_major, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 2, 3, Layout::c_major, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 1, 1, Layout::c_minor, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 2, 1, Layout::c_minor, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 1, 3, Layout::c_minor, Type::type, Level::OptL},  \
-    {1024, 1024, 2, 2, 3, Layout::c_minor, Type::type, Level::OptL},  \
+// Тест-кейсы из filtered_table.csv:
+// Kernel=3x3, Stride=1, Layout=c_minor, Type=fp32
+// IC,   OC,   IX
+//  3,   16,  224
+// 64,   64,   56
+//128, 1024,   14
+//1024,1024,    2
+#define MY_CONV_PARAMS(OptL)                                               \
+    {   3,   16, 224, 1, 3, Layout::c_minor, Type::fp32, Level::OptL},    \
+    {  64,   64,  56, 1, 3, Layout::c_minor, Type::fp32, Level::OptL},    \
+    { 128, 1024,  14, 1, 3, Layout::c_minor, Type::fp32, Level::OptL},    \
+    {1024, 1024,   2, 1, 3, Layout::c_minor, Type::fp32, Level::OptL},
 
 static std::vector<OptimizedConvolutionParams> test_cases = {
-    //
-    // Optimization Level 1: C/C++ compiler auto-vectoring for SIMD
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, fp32)
-    #ifdef OPTIMIZE_INTEGER
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, int32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, i8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, i8u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL1, u8i8_i32)
-    #endif
-
+    MY_CONV_PARAMS(OptL1)
 #ifdef INTRINSIC
-
-    //
-    // Optimization Level 2: simple (naive) manual code vectoring for SIMD
-    //                       (falls-back to level 1 if no C/C++ intrinsic)
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, fp32)
-    #ifdef OPTIMIZE_INTEGER
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, int32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, i8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, i8u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL2, u8i8_i32)
-    #endif
-
-    //
-    // Optimization Level 3: micro-kernel, like 6x16, with SIMD registers
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, fp32)
-    #ifdef OPTIMIZE_INTEGER
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, int32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, i8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, i8u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL3, u8i8_i32)
-    #endif
-
-    //
-    // Optimization Level 4: micro-kernel, and matrix B in L1 cache
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, fp32)
-    #ifdef OPTIMIZE_INTEGER
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, int32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, i8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, i8u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL4, u8i8_i32)
-    #endif
-
-    //
-    // Optimization Level 5: same as Level 4, but B buffer fits L1$
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, fp32)
-    #ifdef OPTIMIZE_INTEGER
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, int32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, i8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, i8u8_i32)
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL5, u8i8_i32)
-    #endif
-
-    //
-    // Optimization Level 6: same as Level 5, but also buffer A in L2$
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL6, fp32)
-
-#if 0 // not implemented
-    //
-    // Optimization Level 7: additionally cache B buffers in L3$
-    //
-    OPTIMIZED_CONVOLUTION_PARAMS(OptL7, fp32)
-#endif // 0
+    MY_CONV_PARAMS(OptL2)
+    MY_CONV_PARAMS(OptL3)
+    MY_CONV_PARAMS(OptL4)
+    MY_CONV_PARAMS(OptL5)
+    MY_CONV_PARAMS(OptL6)
 #endif // INTRINSIC
 };
+
+#undef MY_CONV_PARAMS
 
 const int test_count = test_cases.size();
 
